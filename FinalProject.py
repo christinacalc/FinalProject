@@ -146,27 +146,20 @@ def requestURL(baseurl, params = {}):
 
 access_token = "EAAXPPlAm9IYBANklbFpUmALFW7S7oii4HhRSZBKmZBU8UyN88vmvdzW7nbl63bXjnwbV2ZA532FuIhvBZAJGdXhjjf9E2E7eCM7bd43fEFs3YNxoWqmECQ3LiJmB8uY0WDantWQTXBd46IvG88vrFYzZCfCZBvBDoXKNFZBTOd5RAZDZD"
 
-# url_params= {}
-# baseurl= "https://graph.facebook.com/v2.7/me?"
-# #url_params["access_token"]= access_token
-# url_params["fields"]= "id, name, posts.limit(100){story, created_time}"
+url_params= {}
+baseurl= "https://graph.facebook.com/v2.7/me?"
+url_params["access_token"]= access_token
+url_params["fields"]= "feed"
 
-graph = facebook.GraphAPI(access_token=access_token, version="2.7")
-
-
-posts = graph.get_object(ids= 1273394489352675 , fields="feed")
-
-for post in posts:
-    print(post['created_time']) #THIS IS IN NO WAY FINISHED PLEASE COME BACK TO LATER!!!!!!!!!
-
-#CacheFacebook(baseurl, url_params)
+# graph = facebook.GraphAPI(access_token=access_token, version="2.7")
 
 
+# posts = graph.get_object(id= "1273394489352675" , fields="feed")
 
+# for post in posts:
+#     print(post['created_time']) #THIS IS IN NO WAY FINISHED PLEASE COME BACK TO LATER!!!!!!!!!
 
-
-
-
+CacheFacebook(baseurl, url_params)
 
 
 cur.close() #always close the cursor when you're finished using it!

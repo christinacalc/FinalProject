@@ -9,6 +9,13 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 import json
+import datetime,time 
+import calendar
+
+
+def pretty(obj):
+    return json.dumps(obj, sort_keys=True, indent=2)
+
 try:
     import argparse
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
@@ -83,7 +90,6 @@ def get_google_data():
 
 googledata = get_google_data()
 
-
 conn= sqlite3.connect("FinalProject.sqlite") #establishing DB connection
 cur= conn.cursor() #opening cursor 
 
@@ -125,7 +131,7 @@ def CacheFacebook(baseurl, url_params):
 
         FBCACHE_DICTION[full_url] = response.text
         response_text = response.text
-
+        print(type(response_text))
         fbcache_file = open(facebookcache_file, 'w')
         fbcache_file.write(json.dumps(FBCACHE_DICTION))
         fbcache_file.close()
@@ -144,23 +150,61 @@ def requestURL(baseurl, params = {}):
     return prepped.url
 
 
-access_token = "EAAXPPlAm9IYBANklbFpUmALFW7S7oii4HhRSZBKmZBU8UyN88vmvdzW7nbl63bXjnwbV2ZA532FuIhvBZAJGdXhjjf9E2E7eCM7bd43fEFs3YNxoWqmECQ3LiJmB8uY0WDantWQTXBd46IvG88vrFYzZCfCZBvBDoXKNFZBTOd5RAZDZD"
+access_token = "EAAXPPlAm9IYBAFcmHjaR1vRv6qhBTOA9lvUjwOUGMbMkcONQfCLiM3Upp19h1MZBzO2Wptoa9pBfbqcd43sbZCZAhtEJxlAQzbqgZAgRwgQNT3U9x73tinMNwxRRYETMW96YHWPnUjglvOvlPxkoWFnVzJZBiPwBQusf1Rw4vZBgZDZD"
 
 url_params= {}
-baseurl= "https://graph.facebook.com/v2.7/me?"
+baseurl= "https://graph.facebook.com/v2.7/me/feed"
+url_params["limit"]= 100
 url_params["access_token"]= access_token
-url_params["fields"]= "feed"
 
-# graph = facebook.GraphAPI(access_token=access_token, version="2.7")
+f= CacheFacebook(baseurl, url_params)
+fb= json.loads(f)
+fbdata= fb["data"]
+
+cur.execute('DROP TABLE IF EXISTS Facebook')
+cur.execute('CREATE TABLE Facebook (story TEXT, id TEXT, date_created TIMESTAMP)') #creating users table with 3 columns 
+
+for item in fbdata:
+    if "story" in item.keys():
+        x = item["story"]
+    else:
+        x= "null"
+    fbtup= item['id'], x, item['created_time']
+    cur.execute('INSERT INTO Facebook (story, id, date_created) VALUES (?,?,?)', fbtup)
+
+conn.commit() #commit changes to the DB
+#- - - - - - - - - - - - - - - - - - - - - -  -END FACEBOOK DATA START ORGANIZING BY TIME- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+googleDates= []
+for each in googledata:
+    date= each["createdTime"]
+    newdate= date.split("T")
+    newerdate= newdate[0].split("-")
+    googleDates.append(newerdate)
 
 
-# posts = graph.get_object(id= "1273394489352675" , fields="feed")
+FBDates= []
+for each in fbdata:
+    date= each["created_time"]
+    newdate= date.split("T")
+    newerdate= newdate[0].split("-")
+    FBDates.append(newerdate)
 
-# for post in posts:
-#     print(post['created_time']) #THIS IS IN NO WAY FINISHED PLEASE COME BACK TO LATER!!!!!!!!!
 
-CacheFacebook(baseurl, url_params)
+def GetDOW(datelist):
+    weekdays= {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
+    DOW= []
+    for each in datelist:
+        (year, month, day)= int(each[0]), int(each[1]), int(each[2])
+        x= calendar.weekday(year, month, day)
+        if x in weekdays.keys():
+            DOW.append(weekdays[x])
+    return DOW
 
+googleDOW = GetDOW(googleDates)
+FBDOW = GetDOW(FBDates)
+print(googleDOW)
+print(FBDOW)
 
 cur.close() #always close the cursor when you're finished using it!
 

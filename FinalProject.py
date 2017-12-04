@@ -39,6 +39,16 @@ try:
 except:
     CACHE_DICTION = {}
 
+def GetDOW(datelist):
+    weekdays= {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
+    DOW= []
+    for each in datelist:
+        (year, month, day)= int(each[0]), int(each[1]), int(each[2])
+        x= calendar.weekday(year, month, day)
+        if x in weekdays.keys():
+            DOW.append(weekdays[x])
+            return DOW
+
 def get_credentials(): #the following code was modified from https://developers.google.com/gmail/api/quickstart/python
     home_dir = os.path.expanduser('~') #under 'quickstart.py'
     credential_dir = os.path.join(home_dir, '.credentials')
@@ -90,12 +100,19 @@ def get_google_data():
 
 googledata = get_google_data()
 
+googleDates= []
+for each in googledata:
+    date= each["createdTime"]
+    newdate= date.split("T")
+    newerdate= newdate[0].split("-")
+    googleDates.append(newerdate)
+
 conn= sqlite3.connect("FinalProject.sqlite") #establishing DB connection
 cur= conn.cursor() #opening cursor 
 
 
 cur.execute('DROP TABLE IF EXISTS Google')
-cur.execute('CREATE TABLE Google (file_name TEXT, file_id TEXT, date_created TIMESTAMP)') #creating users table with 3 columns 
+cur.execute('CREATE TABLE Google (file_name TEXT, file_id TEXT, date_created TIMESTAMP, weekday TEXT)') #creating users table with 3 columns 
 
 for item in googledata:
     googletup= item["name"], item['id'], item['createdTime']
@@ -161,6 +178,15 @@ f= CacheFacebook(baseurl, url_params)
 fb= json.loads(f)
 fbdata= fb["data"]
 
+FBDates= []
+for each in fbdata:
+    date= each["created_time"]
+    newdate= date.split("T")
+    newerdate= newdate[0].split("-")
+    FBDates.append(newerdate)
+
+FBDOW = GetDOW(FBDates)
+
 cur.execute('DROP TABLE IF EXISTS Facebook')
 cur.execute('CREATE TABLE Facebook (story TEXT, id TEXT, date_created TIMESTAMP)') #creating users table with 3 columns 
 
@@ -169,42 +195,22 @@ for item in fbdata:
         x = item["story"]
     else:
         x= "null"
-    fbtup= item['id'], x, item['created_time']
+    fbtup= item['id'], x, item['created_time'], 
     cur.execute('INSERT INTO Facebook (story, id, date_created) VALUES (?,?,?)', fbtup)
+
+cur.execute('DROP TABLE IF EXISTS Facebook_Dates')
+cur.execute('CREATE TABLE Facebook_Dates (numerical_date TEXT, week_day TEXT)')
+
+for each in FBDOW:
+    print(each)
+    cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
+    
 
 conn.commit() #commit changes to the DB
 #- - - - - - - - - - - - - - - - - - - - - -  -END FACEBOOK DATA START ORGANIZING BY TIME- - - - - - - - - - - - - - - - - - - - - - - - - 
 
-googleDates= []
-for each in googledata:
-    date= each["createdTime"]
-    newdate= date.split("T")
-    newerdate= newdate[0].split("-")
-    googleDates.append(newerdate)
 
 
-FBDates= []
-for each in fbdata:
-    date= each["created_time"]
-    newdate= date.split("T")
-    newerdate= newdate[0].split("-")
-    FBDates.append(newerdate)
-
-
-def GetDOW(datelist):
-    weekdays= {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
-    DOW= []
-    for each in datelist:
-        (year, month, day)= int(each[0]), int(each[1]), int(each[2])
-        x= calendar.weekday(year, month, day)
-        if x in weekdays.keys():
-            DOW.append(weekdays[x])
-    return DOW
-
-googleDOW = GetDOW(googleDates)
-FBDOW = GetDOW(FBDates)
-print(googleDOW)
-print(FBDOW)
 
 cur.close() #always close the cursor when you're finished using it!
 

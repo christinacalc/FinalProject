@@ -47,7 +47,7 @@ def GetDOW(datelist):
         x= calendar.weekday(year, month, day)
         if x in weekdays.keys():
             DOW.append(weekdays[x])
-            return DOW
+    return DOW
 
 def get_credentials(): #the following code was modified from https://developers.google.com/gmail/api/quickstart/python
     home_dir = os.path.expanduser('~') #under 'quickstart.py'
@@ -179,8 +179,10 @@ fb= json.loads(f)
 fbdata= fb["data"]
 
 FBDates= []
+zipdatafb= []
 for each in fbdata:
     date= each["created_time"]
+    zipdatafb.append(date)
     newdate= date.split("T")
     newerdate= newdate[0].split("-")
     FBDates.append(newerdate)
@@ -195,13 +197,16 @@ for item in fbdata:
         x = item["story"]
     else:
         x= "null"
-    fbtup= item['id'], x, item['created_time'], 
+    fbtup= x, item['id'], item['created_time'], 
     cur.execute('INSERT INTO Facebook (story, id, date_created) VALUES (?,?,?)', fbtup)
 
 cur.execute('DROP TABLE IF EXISTS Facebook_Dates')
 cur.execute('CREATE TABLE Facebook_Dates (numerical_date TEXT, week_day TEXT)')
 
-for each in FBDOW:
+
+fbdowtup= zip(zipdatafb, FBDOW)
+
+for each in fbdowtup:
     print(each)
     cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
     

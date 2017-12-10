@@ -11,6 +11,12 @@ from oauth2client.file import Storage
 import json
 import datetime,time 
 import calendar
+import plotly
+import plotly.plotly as py
+import plotly.graph_objs as go
+
+
+plotly.tools.set_credentials_file(username='christinacalc', api_key="A5fuT8ipXqStpZArcT97")
 
 
 def pretty(obj):
@@ -101,22 +107,35 @@ def get_google_data():
 googledata = get_google_data()
 
 googleDates= []
+zipdatagoogle= []
 for each in googledata:
     date= each["createdTime"]
+    zipdatagoogle.append(date)
     newdate= date.split("T")
     newerdate= newdate[0].split("-")
     googleDates.append(newerdate)
+
+GOOGLEDOW= GetDOW(googleDates)
 
 conn= sqlite3.connect("FinalProject.sqlite") #establishing DB connection
 cur= conn.cursor() #opening cursor 
 
 
 cur.execute('DROP TABLE IF EXISTS Google')
-cur.execute('CREATE TABLE Google (file_name TEXT, file_id TEXT, date_created TIMESTAMP, weekday TEXT)') #creating users table with 3 columns 
+cur.execute('CREATE TABLE Google (file_name TEXT, file_id TEXT, date_created TIMESTAMP NOT NULL PRIMARY KEY)') #creating users table with 3 columns 
 
 for item in googledata:
     googletup= item["name"], item['id'], item['createdTime']
     cur.execute('INSERT INTO Google (file_name, file_id, date_created) VALUES (?,?,?)', googletup)
+
+cur.execute('DROP TABLE IF EXISTS Google_Dates')
+cur.execute('CREATE TABLE Google_Dates (numerical_date TEXT, week_day TEXT)')
+
+googledowtup= zip(zipdatagoogle, GOOGLEDOW)
+# for each in googledowtup:
+#     print(each)
+#     cur.execute('INSERT INTO Google_Dates (numerical_date, week_day) VALUES (?, ?)', each)
+
 
 conn.commit() #commit changes to the DB
 #- - - - - - - - - - - - - - - - - END GOOGLE DATA/START FACEBOOK DATA- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,13 +225,96 @@ cur.execute('CREATE TABLE Facebook_Dates (numerical_date TEXT, week_day TEXT)')
 
 fbdowtup= zip(zipdatafb, FBDOW)
 
-for each in fbdowtup:
-    print(each)
-    cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
+# for each in fbdowtup:
+#     print(each)
+#     cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
     
 
 conn.commit() #commit changes to the DB
-#- - - - - - - - - - - - - - - - - - - - - -  -END FACEBOOK DATA START ORGANIZING BY TIME- - - - - - - - - - - - - - - - - - - - - - - - - 
+#- - - - - - - - - - - - - - - - - - - - - -  -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+myfbdict= {"Monday": 0, "Tuesday": 0, "Wednesday": 0, "Thursday": 0, "Friday": 0, "Saturday": 0, "Sunday": 0}
+
+for item in fbdowtup:
+    each= list(item)   
+    if each[1] == "Monday":
+        myfbdict["Monday"]+=1
+    if each[1] == "Tuesday":
+        myfbdict["Tuesday"]+=1
+    if each[1] == "Wednesday":
+        myfbdict["Wednesday"]+=1
+    if each[1] == "Thursday":
+        myfbdict["Thursday"]+=1
+    if each[1] == "Friday":
+        myfbdict["Friday"]+=1
+    if each[1] == "Saturday":
+        myfbdict["Saturday"]+=1
+    if each[1] == "Sunday":
+        myfbdict["Sunday"]+=1
+
+print(myfbdict)
+
+mygoogledict= {"Monday": 0, "Tuesday": 0, "Wednesday": 0, "Thursday": 0, "Friday": 0, "Saturday": 0, "Sunday": 0}
+
+for item in googledowtup:
+    each= list(item)   
+    print(item)
+    if each[1] == "Monday":
+        mygoogledict["Monday"]+=1
+    if each[1] == "Tuesday":
+        mygoogledict["Tuesday"]+=1
+    if each[1] == "Wednesday":
+        mygoogledict["Wednesday"]+=1
+    if each[1] == "Thursday":
+        mygoogledict["Thursday"]+=1
+    if each[1] == "Friday":
+        mygoogledict["Friday"]+=1
+    if each[1] == "Saturday":
+        mygoogledict["Saturday"]+=1
+    if each[1] == "Sunday":
+        mygoogledict["Sunday"]+=1
+
+
+fbkeys= list(myfbdict.keys())
+fbvalues= list(myfbdict.values())
+googlekeys= list(mygoogledict.keys())
+googlevalues= list(mygoogledict.values())
+
+trace1 = go.Bar(
+    x=fbkeys,
+    y=fbvalues,
+    name='Facebook use'
+)
+trace2 = go.Bar(
+    x=googlekeys,
+    y=googlevalues,
+    name='Google Drive use'
+)
+
+data = [trace1, trace2]
+layout = go.Layout(
+    barmode='group'
+)
+
+fig = go.Figure(data=data, layout=layout)
+py.plot(fig, filename='grouped-bar')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -122,9 +122,9 @@ cur.execute('DROP TABLE IF EXISTS Google_Dates')
 cur.execute('CREATE TABLE Google_Dates (numerical_date TEXT, week_day TEXT)') #matches google numerical date with the weekday of that date
 
 googledowtup= zip(zipdatagoogle, GOOGLEDOW) #creates a tuple containing the numerical date with its corresponding day of the week
-# for each in googledowtup:
-#     print(each)
-#     cur.execute('INSERT INTO Google_Dates (numerical_date, week_day) VALUES (?, ?)', each)
+for each in googledowtup:
+    print(each)
+    cur.execute('INSERT INTO Google_Dates (numerical_date, week_day) VALUES (?, ?)', each)
 
 
 conn.commit() #commit changes to the DB
@@ -214,9 +214,9 @@ cur.execute('CREATE TABLE Facebook_Dates (numerical_date TEXT, week_day TEXT)')
 
 fbdowtup= zip(zipdatafb, FBDOW) #creates a zip object which is a list of tuples
 
-# for each in fbdowtup:
-#     print(each)
-#     cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
+for each in fbdowtup:
+    print(each)
+    cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
     
 
 conn.commit() #commit changes to the DB
@@ -224,9 +224,12 @@ conn.commit() #commit changes to the DB
 
 myfbdict= {"Monday": 0, "Tuesday": 0, "Wednesday": 0, "Thursday": 0, "Friday": 0, "Saturday": 0, "Sunday": 0} #initialized DOW count dictionary
 
-for item in fbdowtup: #item will be a tuple
-    each= list(item)  #changing item tuple to list
-    if each[1] == "Monday": #counter pattern
+
+cur.execute('SELECT * FROM Facebook_Dates') # selecting all the rows from table Facebook_Dates, which contains date of post and day of week 
+fbdowlist= cur.fetchall() #creates a list of these selected item
+
+for each in fbdowlist: #item will be a tuple
+    if each[1] == "Monday": #counter pattern for each DOW
         myfbdict["Monday"]+=1
     if each[1] == "Tuesday":
         myfbdict["Tuesday"]+=1
@@ -241,13 +244,13 @@ for item in fbdowtup: #item will be a tuple
     if each[1] == "Sunday":
         myfbdict["Sunday"]+=1
 
-print(myfbdict)
-
 mygoogledict= {"Monday": 0, "Tuesday": 0, "Wednesday": 0, "Thursday": 0, "Friday": 0, "Saturday": 0, "Sunday": 0}
 
-for item in googledowtup: #item will be a tuple
-    each= list(item)   #changing item tuple to list
-    if each[1] == "Monday": #counter pattern
+cur.execute('SELECT * FROM Google_Dates') # selecting all the rows from table Google_Dates, which contains date of post along with day of week
+googledowlist= cur.fetchall() #creates a list of the items 
+
+for each in googledowlist:
+    if each[1] == "Monday": #counter pattern for each DOW
         mygoogledict["Monday"]+=1
     if each[1] == "Tuesday":
         mygoogledict["Tuesday"]+=1
@@ -267,6 +270,7 @@ fbkeys= list(myfbdict.keys()) #converting dict_keys object to a list for all fou
 fbvalues= list(myfbdict.values())
 googlekeys= list(mygoogledict.keys())
 googlevalues= list(mygoogledict.values())
+
 
 trace1 = go.Bar( #code pattern obtained from https://plot.ly/python/bar-charts/ 
     x=fbkeys, #x-axis will be day of the week

@@ -9,7 +9,6 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 import json
-import datetime,time 
 import calendar
 import plotly
 import plotly.plotly as py
@@ -106,6 +105,8 @@ for each in googledata:
     googleDates.append(newerdate)
 
 GOOGLEDOW= GetDOW(googleDates) #calling DOW function to get Days of the week for googledata, will return a list
+ 
+#- - - - - - - - - - - - - - - - - - -- Making Connection/Modifying DB-  - - - -- - - - - - - -- - - - - - - - - --
 
 conn= sqlite3.connect("FinalProject.sqlite") #establishing DB connection
 cur= conn.cursor() #opening cursor 
@@ -123,7 +124,6 @@ cur.execute('CREATE TABLE Google_Dates (numerical_date TEXT, week_day TEXT)') #m
 
 googledowtup= zip(zipdatagoogle, GOOGLEDOW) #creates a tuple containing the numerical date with its corresponding day of the week
 for each in googledowtup:
-    print(each)
     cur.execute('INSERT INTO Google_Dates (numerical_date, week_day) VALUES (?, ?)', each)
 
 
@@ -197,6 +197,8 @@ for each in fbdata: #accessing each dict to obtain post info
 
 FBDOW = GetDOW(FBDates) #calling DOW function to get Days of the week for fbdata, will return a list of days of week pertaining to numerical dates
 
+#- - - - - - - - - - - - - - - - - - - - - - - -- - - -Creating/Modifying DB- - - - - - - - - - - - - - - - - - - - - - -
+
 cur.execute('DROP TABLE IF EXISTS Facebook')
 cur.execute('CREATE TABLE Facebook (story TEXT, id TEXT, date_created TIMESTAMP)') #creating users table with 3 columns 
 
@@ -215,12 +217,12 @@ cur.execute('CREATE TABLE Facebook_Dates (numerical_date TEXT, week_day TEXT)')
 fbdowtup= zip(zipdatafb, FBDOW) #creates a zip object which is a list of tuples
 
 for each in fbdowtup:
-    print(each)
-    cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each)
+    cur.execute('INSERT INTO Facebook_Dates (numerical_date, week_day) VALUES (?,?)', each) #inserting into DB
     
 
 conn.commit() #commit changes to the DB
-#- - - - - - - - - - - - - - - - - - - PLOTLY- - -  -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -PLOTLY- - -  -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
 myfbdict= {"Monday": 0, "Tuesday": 0, "Wednesday": 0, "Thursday": 0, "Friday": 0, "Saturday": 0, "Sunday": 0} #initialized DOW count dictionary
 
@@ -265,11 +267,16 @@ for each in googledowlist:
     if each[1] == "Sunday":
         mygoogledict["Sunday"]+=1
 
-
 fbkeys= list(myfbdict.keys()) #converting dict_keys object to a list for all four of these 
 fbvalues= list(myfbdict.values())
 googlekeys= list(mygoogledict.keys())
 googlevalues= list(mygoogledict.values())
+
+for each in mygoogledict:
+    print("On {}, you posted {} Google Drive files.\n".format(each, mygoogledict[each]))
+
+for each in myfbdict:
+    print("On {}, you made {} Facebook posts.\n".format(each, myfbdict[each]))
 
 
 trace1 = go.Bar( #code pattern obtained from https://plot.ly/python/bar-charts/ 
